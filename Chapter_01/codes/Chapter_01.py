@@ -1,8 +1,8 @@
-# Chapter 1: Basic Image & Video Processing 
+# # Chapter 1: Basic Image and Video Processing 
 
 # Author: Sandipan Dey
 
-# Display RGB image color channels in 3D
+###########################################
 
 from skimage.io import imread
 import numpy as np
@@ -24,9 +24,11 @@ def plot_3d(X, Y, Z, cmap='Reds', title=''):
     ax.xaxis.set_major_locator(LinearLocator(10))
     ax.xaxis.set_major_formatter(FormatStrFormatter('%.02f'))
     ax.view_init(elev=10., azim=5)
+    ax.set_title(title, size=20)
     plt.show()
 
 im = imread('images/Img_01_01.jpg')
+
 Y = np.arange(im.shape[0])
 X = np.arange(im.shape[1])
 X, Y = np.meshgrid(X, Y)
@@ -36,11 +38,14 @@ Z2 = im[...,1]
 Z3 = im[...,2]
 
 plot_3d(Z1, X, im.shape[1]-Y, cmap='Reds', title='3D plot for the Red Channel')
+
 plot_3d(Z2, X, im.shape[1]-Y, cmap='Greens', title='3D plot for the Green Channel')
+
 plot_3d(Z3, X, im.shape[1]-Y, cmap='Blues', title='3D plot for the Blue Channel')
 
+# ## 2.  Video I/O
 
-# Read/Write Video Files with scikit-video
+# ### 2.1 Read/Write Video Files with scikit-video
 
 import skvideo.io
 import numpy as np
@@ -52,10 +57,12 @@ reader = skvideo.io.FFmpegReader('images/Vid_01_01.mp4',
                 inputdict=inputparameters,
                 outputdict=outputparameters)
 
+## Read video file
 num_frames, height, width, num_channels = reader.getShape()
 print(num_frames, height, width, num_channels)
 
 plt.figure(figsize=(20,10))
+
 frame_list = np.random.choice(num_frames, 4)
 i, j = 0, 1
 for frame in reader.nextFrame():
@@ -68,25 +75,20 @@ for frame in reader.nextFrame():
     i += 1
 plt.show()
 
-import skvideo.io
-import numpy as np
-import matplotlib.pylab as plt
-from skimage.filters import threshold_otsu
-
 from skimage.color import rgb2gray
 from skimage.filters import threshold_otsu
-writer = skvideo.io.FFmpegWriter("images/spiderman_binary.mp4", outputdict={})
-    
+
+writer = skvideo.io.FFmpegWriter("images/spiderman_binary.mp4", outputdict={})    
 for frame in skvideo.io.vreader("images/Vid_01_01.mp4"):
     frame = rgb2gray(frame)
     thresh = threshold_otsu(frame)
     binary = np.zeros((frame.shape[0], frame.shape[1], 3), dtype=np.uint8)
     binary[...,0] = binary[...,1] = binary[...,2] = 255*(frame > thresh).astype(np.uint8)
-    #print(np.max(binary))
     writer.writeFrame(binary)
 writer.close()
 
 plt.figure(figsize=(20,10))
+
 reader = skvideo.io.FFmpegReader("images/spiderman_binary.mp4")
 num_frames, height, width, num_channels = reader.getShape()
 frame_list = np.random.choice(num_frames, 4)
@@ -101,23 +103,19 @@ for frame in reader.nextFrame():
     i += 1
 plt.show()
 
-
-# Capture Video from camera, extract frames with opencv-python
+# ### 2.2 Capture Video from camera, extract frames with opencv-python
 
 import cv2
 import matplotlib.pyplot as plt
 
 vc = cv2.VideoCapture(0)
-
 plt.ion()
-
 if vc.isOpened(): # try to get the first frame
     is_capturing, frame = vc.read()    
     webcam_preview = plt.imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))    
 else:
     is_capturing = False
 
-# capture 10 frames
 frame_index = 1
 while is_capturing:
     
@@ -137,8 +135,9 @@ while is_capturing:
     
 vc.release()
 
+# ## 3.  Implement Instagram-like Gotham Filter
 
-# The Gotham Filter
+# ### The Gotham Filter
 
 from PIL import Image
 import numpy as np
@@ -146,19 +145,19 @@ import matplotlib.pylab as plt
 
 im = Image.open('images/Img_01_03.jpg') # assumed pixel values in [0,255]
 print(np.max(im))
-# 255
 
-# reference points
+# #### Interpolation with numpy interp() function
+
 x_p = np.linspace(0, 2*np.pi, 10) # generate sequence of 10 points (numbers) evenly spaced in the interval [0, 2π] 
-# true values at reference points
+
 y_p = np.cos(x_p)
-# test points
+
 x = np.linspace(0, 2*np.pi, 50) # generate sequence of 50 test points (numbers) evenly spaced in the interval [0, 2π]
-# true values at all points
+
 y = np.cos(x)
-# interpolated values at all test points
+
 y_interp = np.interp(x, x_p, y_p)
-# now plot
+
 plt.figure(figsize=(20,10)) 
 plt.plot(x_p, y_p, 'o', label='reference points')
 plt.plot(x, y_interp, '-x', label='interpolated')
@@ -221,9 +220,10 @@ plt.show()
 blue_old = np.linspace(0,255,17) # pixel values at reference points
 blue_new = [0., 11.985, 30.09, 64.005, 81.09, 99.96, 107.1, 111.945, 121.125, 143.055, 147.9, 159.885, 171.105, 
                186.915, 215.985, 235.875, 255.] # new pixel values at the reference points
-# now perform a blue channel interpolation
+
 b2 = Image.fromarray((np.reshape(np.interp(np.array(b1).ravel(), blue_old, blue_new), 
                                  (im.height, im.width))).astype(np.uint8), mode='L')
+
 plt.figure(figsize=(20,15))
 plt.subplot(221)
 plt.imshow(im2)
@@ -245,35 +245,39 @@ plt.imshow(im3)
 plt.axis('off')
 plt.show()
 
+# ## 4.  Explore image manipulations with different python libraries
 
-# Explore image manipulations with different python libraries
+# ### 4.1 Plot image montage with scikit-image
 
 from skimage.io import imread
 from skimage.util import random_noise, montage
 import matplotlib.pylab as plt
 import numpy as np
 im = imread("images/Img_01_04.jpg")
-plt.figure(figsize=(15,15))
+
 sigmas = np.linspace(0, 1, 9) # create 9 standard deviation values in the increasing order starting from 0 to 1
 noisy_images = np.zeros((9, im.shape[0], im.shape[1], im.shape[2]))
 for i in range(len(sigmas)): 
     noisy_images[i,:,:,:] = random_noise(im, var=sigmas[i]**2) # add Gaussian random noise to image with different sigma values
+
 noisy_images_montage = montage(noisy_images, rescale_intensity=True, multichannel=True) # create montage
+
+plt.figure(figsize=(15,15))
 plt.imshow(noisy_images_montage)
 plt.title('Noisy montage', size=30)
 plt.axis('off')
 plt.show()
 
-
-# Crop / Resize images with scipy ndimage module
+# ### 4.2 Crop / Resize images with scipy ndimage module
 
 from scipy import ndimage
 import matplotlib.pyplot as plt
 from skimage.io import imread
+
 im = imread('images/Img_01_05.jpg') / 255
 zoomed_im = ndimage.zoom(im, (2,2,1), mode='nearest', order=1) # no zoom on color channel, order of the spline interpolation = 1
 print(im.shape, zoomed_im.shape)
-# (320, 475, 3) (640, 950, 3)
+
 plt.figure(figsize=(20,10))
 plt.subplot(121)
 plt.imshow(im)
@@ -283,9 +287,8 @@ plt.imshow(zoomed_im[125:325,375:550,:]) # crop the enlarged face
 plt.title('Zoomed and Cropped Image', size=25)
 plt.show()
 
+# ### 4.3  Draw contours with opencv-python
 
-# Draw contours with opencv-python
- 
 import cv2
 import numpy as np
 import matplotlib.pylab as plt
@@ -297,12 +300,10 @@ gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 edged = cv2.Canny(gray, 125, 250)
 contours_edged, _ = cv2.findContours(edged, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 print("Number of Contours found with Canny edges = " + str(len(contours_edged)))
-# 967
 
 ret, thresh = cv2.threshold(gray, 127, 255, 0)
 contours_thresh, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 print("Number of Contours found with threshold = " + str(len(contours_thresh)))
-# 640
 
 plt.figure(figsize=(20,15))
 plt.subplot(221), plt.imshow(image), plt.title('Original Image', size=20), plt.axis('off')
@@ -321,8 +322,28 @@ plt.title('First ' + str(n) + ' Contour lines with Canny Edges', size=20), plt.a
 plt.tight_layout()
 plt.show()
 
+# ### 4.4 Creating different Hatched Contour Patterns for different levels with matplotlib
 
-# Counting Objects in an image
+from skimage.io import imread
+from skimage.color import rgb2gray
+
+img = rgb2gray(imread('images/Img_01_01.jpg'))
+
+y = np.arange(img.shape[0]) 
+x = np.arange(img.shape[1]) 
+x, y = np.meshgrid(x, y)
+z = img
+
+plt.figure(figsize=(15,10))
+cs = plt.contourf(x, img.shape[0]-y, z, hatches=['-', '/', '\\', '//', '//\\', '//\\\\'], cmap='gray', extend='both', levels=6, alpha=0.5)
+cs.cmap.set_over('red')
+cs.cmap.set_under('blue')
+cs.changed()
+plt.colorbar()
+plt.axis('off')
+plt.show()
+
+# ### 4.5 Counting Objects in an image
 
 import cv2
 import numpy as np
@@ -340,8 +361,9 @@ _, cnts, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX
 output = image.copy()
 
 for c in cnts:
+    # draw each contour on the output image with a 3px thick red
+    # outline, then display the output contours one at a time
     cv2.drawContours(output, [c], -1, (0, 0, 255), 2) 
-
 
 text = "Found {} objects".format(len(cnts))
 cv2.putText(output, text, (50, 220),  cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
@@ -351,8 +373,9 @@ plt.subplot(132), plt.imshow(thresh, cmap='gray'), plt.axis('off'), plt.title('B
 plt.subplot(133), plt.imshow(cv2.cvtColor(output, cv2.COLOR_BGR2RGB)), plt.axis('off'), plt.title('Counting objects', size=20)
 plt.show()
 
+# ### 4.6 Convert a png image with palette to gray scale with PIL
 
-# Convert a png image with palette to gray scale with PIL
+#The easy way
 
 import numpy as np
 from PIL import Image
@@ -360,11 +383,11 @@ import matplotlib.pyplot as plt
 
 img = Image.open('images/Img_01_07.png')
 print(img.mode)
+
 plt.imshow(img)
 plt.axis('off')
 plt.title('Original Image')
 plt.show()
-
 
 img = img.convert('RGB').convert('L')
 print(img.mode)
@@ -383,7 +406,6 @@ def rgb2gray(R, G, B):
 img = Image.open('images/Img_01_07.png') # filename is the png file in question
 pal = img.getpalette()     # get the palette
 
-
 arr = np.zeros((img.height, img.width)) # initialize the output image with zero values
 for i in range(arr.shape[0]):
     for j in range(arr.shape[1]):
@@ -391,14 +413,13 @@ for i in range(arr.shape[0]):
         R, G, B = pal[3*idx], pal[3*idx+1], pal[3*idx+2] # get the R,G,B values of the pixel
         arr[i,j] = rgb2gray(R, G, B) # convert to grayscale
 
-
 plt.imshow(arr, cmap='gray')
 plt.title('Grayscale Image')
 plt.axis('off')
 plt.show()
 
+# ### 4.7 Different ways to convert an RGB image to GrayScale
 
-# Different ways to convert an RGB image to GrayScale
 import numpy as np
 from skimage.color import rgb2lab
 from skimage.io import imread
@@ -413,7 +434,6 @@ def rgb2gray(img):
     gray_images['Lab L'] = rgb2lab(img)[...,0]
     gray_images['RGB R'] = img[...,0]
     return gray_images
-
 
 image = imread('images/Img_01_17.png')
 plt.figure(figsize=(5,5))
@@ -430,81 +450,75 @@ for gray_type in sorted(gray_images):
 plt.suptitle('Conerting RGB to GrayScale image with different methods', size=25)
 plt.show()
 
-
-# Rotating an image with scipy.ndimage
-
-from scipy.ndimage import rotate
-from skimage.io import imread
-im = imread('images/Img_01_04.jpg') 
-im = rotate(im, -45) # rotate clockwise by 45 degrees
-plt.imshow(im)
-plt.axis('off') # stop showing the axes
-plt.show()
-
-
-# Image Differences with PIL
+# ### 4.8 Image Differences with PIL
 
 from PIL.ImageChops import difference
 from PIL import Image
+
 im1 = Image.open("images/Img_01_08.jpg")
 im2 = Image.open("images/Img_01_09.jpg").resize((im1.width, im1.height))
+
 difference(im2, im1).show()
 difference(im2, im1).save('images/Img_01_16.jpg')
 
-import matplotlib.pyplot as plt
-from skimage.color import rgb2hsv, hsv2rgb
-import numpy as np
-im = imread("images/Img_01_11.jpg")
-im_hsv = np.clip(rgb2hsv(im), 0, 1)
-plt.gray()
-plt.figure(figsize=(20,18))
-plt.subplot(331), plt.imshow(im), plt.title('original image', size=20), plt.axis('off')
-plt.subplot(332), plt.imshow(im_hsv[...,0]), plt.title('h', size=20), plt.axis('off')
-plt.subplot(333), plt.imshow(im_hsv[...,1]), plt.title('s', size=20), plt.axis('off')
-plt.subplot(334), plt.imshow(im_hsv[...,2]), plt.title('v', size=20), plt.axis('off')
-im_hsv_copy = np.copy(im_hsv)
-im_hsv[...,0] /= 4
-plt.subplot(335), plt.imshow(np.clip(hsv2rgb(im_hsv), 0, 1)), plt.title('original image with h=h/4', size=20), plt.axis('off')
-im_hsv = im_hsv_copy
-im_hsv[...,1] /= 3
-plt.subplot(336), plt.imshow(np.clip(hsv2rgb(im_hsv), 0, 1)), plt.title('original image with s=s/3', size=20), plt.axis('off')
-im_hsv = im_hsv_copy
-im_hsv[...,2] /= 5
-plt.subplot(337), plt.imshow(np.clip(hsv2rgb(im_hsv), 0, 1)), plt.title('original image with v=v/5', size=20), plt.axis('off')
-plt.show()
+# ### 4.9 RGB to hsv and Yuv color spaces with scikit-image
 
 from skimage.io import imread
-from skimage.color import rgb2yuv, yuv2rgb
-from matplotlib.pylab import plt
+from skimage.color import rgb2hsv, hsv2rgb
 import numpy as np
-im = imread("images/Img_01_04.jpg")
-im_Yuv = rgb2yuv(im)
+import matplotlib.pyplot as plt
+
+im = imread("images/Img_01_11.jpg")
+im_hsv = np.clip(rgb2hsv(im), 0, 1)
+
+plt.figure(figsize=(20,12))
+plt.subplots_adjust(0,0,1,0.925,0.05,0.05)
 plt.gray()
-plt.figure(figsize=(20,18))
-plt.subplot(331), plt.imshow(im), plt.title('original image', size=20), plt.axis('off')
-plt.subplot(332), plt.imshow(im_Yuv[...,0]), plt.title('Y', size=20), plt.axis('off')
-plt.subplot(333), plt.imshow(im_Yuv[...,1]), plt.title('u', size=20), plt.axis('off')
-plt.subplot(334), plt.imshow(im_Yuv[...,2]), plt.title('v', size=20), plt.axis('off')
-im_Yuv_copy = np.copy(im_Yuv)
-im_Yuv[...,0] /= 2
-plt.subplot(335), plt.imshow(np.clip(yuv2rgb(im_Yuv),0,1)), plt.title('original image with Y=Y/2', size=20), plt.axis('off')
-im_Yuv = im_Yuv_copy
-im_Yuv[...,1] /= 3
-plt.subplot(336), plt.imshow(np.clip(yuv2rgb(im_Yuv),0,1)), plt.title('original image with u=u/3', size=20), plt.axis('off')
-im_Yuv = im_Yuv_copy
-im_Yuv[...,2] /= 4
-plt.subplot(337), plt.imshow(np.clip(yuv2rgb(im_Yuv),0,1)), plt.title('original image with v=v/4', size=20), plt.axis('off')
+plt.subplot(231), plt.imshow(im_hsv[...,0]), plt.title('h', size=20), plt.axis('off')
+plt.subplot(232), plt.imshow(im_hsv[...,1]), plt.title('s', size=20), plt.axis('off')
+plt.subplot(233), plt.imshow(im_hsv[...,2]), plt.title('v', size=20), plt.axis('off')
+im_hsv_copy = np.copy(im_hsv)
+im_hsv[...,0] /= 4
+plt.subplot(234), plt.imshow(np.clip(hsv2rgb(im_hsv), 0, 1)), plt.title('original image with h=h/4', size=20), plt.axis('off')
+im_hsv = im_hsv_copy
+im_hsv[...,1] /= 3
+plt.subplot(235), plt.imshow(np.clip(hsv2rgb(im_hsv), 0, 1)), plt.title('original image with s=s/3', size=20), plt.axis('off')
+im_hsv = im_hsv_copy
+im_hsv[...,2] /= 5
+plt.subplot(236), plt.imshow(np.clip(hsv2rgb(im_hsv), 0, 1)), plt.title('original image with v=v/5', size=20), plt.axis('off')
 plt.show()
 
+from skimage.color import rgb2yuv, yuv2rgb
 
-# Resizing an image with opencv-python
+im = imread("images/Img_01_04.jpg")
+im_Yuv = rgb2yuv(im)
+
+plt.figure(figsize=(20,15))
+plt.subplots_adjust(0,0,1,0.925,0.05,0.05)
+plt.gray()
+plt.subplot(231), plt.imshow(im_Yuv[...,0]), plt.title('Y', size=20), plt.axis('off')
+plt.subplot(232), plt.imshow(im_Yuv[...,1]), plt.title('u', size=20), plt.axis('off')
+plt.subplot(233), plt.imshow(im_Yuv[...,2]), plt.title('v', size=20), plt.axis('off')
+im_Yuv_copy = np.copy(im_Yuv)
+im_Yuv[...,0] /= 2
+plt.subplot(234), plt.imshow(np.clip(yuv2rgb(im_Yuv),0,1)), plt.title('original image with Y=Y/2', size=20), plt.axis('off')
+im_Yuv = im_Yuv_copy
+im_Yuv[...,1] /= 3
+plt.subplot(235), plt.imshow(np.clip(yuv2rgb(im_Yuv),0,1)), plt.title('original image with u=u/3', size=20), plt.axis('off')
+im_Yuv = im_Yuv_copy
+im_Yuv[...,2] /= 4
+plt.subplot(236), plt.imshow(np.clip(yuv2rgb(im_Yuv),0,1)), plt.title('original image with v=v/4', size=20), plt.axis('off')
+plt.show()
+
+# ### 4.10 Resizing an image with opencv-python
 
 import cv2
 import matplotlib.pylab as plt
 im = cv2.imread("images/Img_01_10.jpg") 
-plt.figure(figsize=(18,12))
-i = 1
 interps = ['nearest', 'bilinear', 'area', 'lanczos', 'bicubic']
+
+i = 1
+plt.figure(figsize=(18,12))
 for interp in [cv2.INTER_NEAREST, cv2.INTER_LINEAR, cv2.INTER_AREA, cv2.INTER_LANCZOS4, cv2.INTER_CUBIC]:
  im1 = cv2.resize(im, None, fx=4., fy=4., interpolation = interp) # 4 times
  plt.subplot(2,3,i)
@@ -515,23 +529,28 @@ for interp in [cv2.INTER_NEAREST, cv2.INTER_LINEAR, cv2.INTER_AREA, cv2.INTER_LA
 print(im.shape, im1.shape)
 plt.show()
 
-
-# Add a logo to an image with scikit-image
+# ### 4.11 Add a logo to an image with scikit-image
 
 from skimage.io import imread
 from skimage.color import rgb2gray, gray2rgb
 import numpy as np
 import matplotlib.pylab as plt
+
 img1 = imread('images/Img_01_13.png').astype(np.uint8)
 img2 = imread('images/Img_01_14.jpg').astype(np.uint8) # logo
+
 rows, cols, _ = img2.shape
 roi = img1[0:rows, 0:cols]
-# Now create a mask of logo and create its inverse mask also
+
 img2gray = (255*rgb2gray(img2)).astype(np.uint8)
 mask = 255*(img2gray < 150) #cv2.threshold(img2gray, 10, 255, cv2.THRESH_BINARY)
+
 mask_inv = np.invert(mask) #cv2.bitwise_not(mask)
 mask_inv = mask_inv.astype(np.uint8)
+
 img1_bg = np.bitwise_and(roi, gray2rgb(mask_inv)) #cv2.bitwise_and(roi,roi,mask = mask_inv)
+
+img2_fg = np.bitwise_and(img2, gray2rgb(mask)) # cv2.bitwise_and(img2,img2,mask = mask)
 
 dst = img1_bg + img2_fg
 img1[0:rows, 0:cols ] = dst
@@ -540,8 +559,8 @@ plt.imshow(img1)
 plt.axis('off')
 plt.show()
 
+# ### 4.12 Change brightness / contrast of an image with linear transform and gamma correction with opencv-python
 
-# Change brightness / contrast of an image with linear transform and gamma correction with opencv-python
 import cv2
 import numpy as np
 import matplotlib.pylab as plt
@@ -580,40 +599,11 @@ for gamma in np.linspace(0, 2, 16):
 plt.suptitle('Gamma correction', size=30)
 plt.show()
 
+# ## 5. Object Removal with Seam Carving
 
-# Detecting Colors and Changing Colors of Objects with opencv-python
-
-import cv2
-import numpy as np
-import matplotlib.pylab as plt
-
-img = cv2.imread("images/Img_01_18.png")
-hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-mask = cv2.inRange(hsv, (0, 70, 25), (15, 255, 255))
-imask = mask>0
-brown = np.zeros_like(img)
-brown[imask] = img[imask]
-
-black = img.copy()
-hsv[...,0:3] = hsv[...,0:3] / 3
-black[imask] = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)[imask]
-black = np.clip(black, 0, 255)
-
-plt.figure(figsize=(20,10))
-plt.subplots_adjust(0,0,1,0.9,0.01,0.075)
-plt.subplot(131), plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB)), plt.axis('off'), plt.title('original', size=20)
-plt.subplot(132), plt.imshow(cv2.cvtColor(brown, cv2.COLOR_BGR2RGB)), plt.axis('off'), plt.title('only horse', size=20)
-plt.subplot(133), plt.imshow(cv2.cvtColor(black, cv2.COLOR_BGR2RGB)), plt.axis('off'), plt.title('horse color changed', size=20)
-plt.suptitle('Detecting and changing object colors with opencv-python', size=25)
-plt.show()
-
-
-# Object Removal with Seam Carving
-
-# pip install scikit-image==0.14.2
 import skimage
 print(skimage.__version__)
-# 0.14.2
+
 from skimage.io import imread
 from skimage.color import rgb2gray
 from skimage.transform import seam_carve
@@ -634,8 +624,7 @@ out = seam_carve(image, mask_image, 'verical', 120)
 plt.imshow(out)
 plt.show()
 
-
-# Creating Fake Miniature Effect
+# ## 6. Create Fake Miniature Effect
 
 from PIL import Image, ImageEnhance, ImageFilter
 from scipy.ndimage import binary_erosion

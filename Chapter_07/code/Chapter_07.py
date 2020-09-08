@@ -1,10 +1,14 @@
-######################
-# Chapter 7
-######################
-# Author: Sandipan Dey
-######################
+# Chapter 7: Facial Image Processing
 
-# pip install dlib
+# Author: Sandipan Dey
+
+###########################################
+
+# ## Problems
+
+# ## 1. Face morphing with dlib, scipy.spatial and opencv-python
+
+#!pip install dlib
 from scipy.spatial import Delaunay
 from skimage.io import imread
 import scipy.misc
@@ -13,7 +17,6 @@ import dlib
 import numpy as np
 from matplotlib import pyplot as plt
 
-# Find 68 face landmarks using dlib
 def extract_landmarks(img, add_boundary_points=True, predictor_path = 'models/shape_predictor_68_face_landmarks.dat'):
   detector = dlib.get_frontal_face_detector()
   predictor = dlib.shape_predictor(predictor_path)
@@ -44,7 +47,6 @@ dst_img = imread(dst_path)
 src_points = extract_landmarks(src_img)
 dst_points = extract_landmarks(dst_img)
 
-
 def weighted_average_points(start_points, end_points, percent=0.5):
   if percent <= 0:
     return end_points
@@ -52,12 +54,6 @@ def weighted_average_points(start_points, end_points, percent=0.5):
     return start_points
   else:
     return np.asarray(start_points*percent + end_points*(1-percent), np.int32)
-
-
-# * Implement the following function bilinear_interpolate() which interpolates over every image channel:
-
-# In[21]:
-
 
 def bilinear_interpolate(img, coords):
   int_coords = np.int32(coords)
@@ -76,7 +72,6 @@ def bilinear_interpolate(img, coords):
 
   return inter_pixel.T
 
-
 def get_grid_coordinates(points):
   xmin = np.min(points[:, 0])
   xmax = np.max(points[:, 0]) + 1
@@ -84,7 +79,6 @@ def get_grid_coordinates(points):
   ymax = np.max(points[:, 1]) + 1
   return np.asarray([(x, y) for y in range(ymin, ymax)
                      for x in range(xmin, xmax)], np.uint32)
-
 
 def process_warp(src_img, result_img, tri_affines, dst_points, delaunay):
   roi_coords = get_grid_coordinates(dst_points)
@@ -99,7 +93,6 @@ def process_warp(src_img, result_img, tri_affines, dst_points, delaunay):
     result_img[y, x] = bilinear_interpolate(src_img, out_coords)
   return None
 
-
 def get_triangular_affine_matrices(vertices, src_points, dest_points):
   ones = [1, 1, 1]
   for tri_indices in vertices:
@@ -107,7 +100,6 @@ def get_triangular_affine_matrices(vertices, src_points, dest_points):
     dst_tri = np.vstack((dest_points[tri_indices, :].T, ones))
     mat = np.dot(src_tri, np.linalg.inv(dst_tri))[:2, :]
     yield mat
-
 
 def warp_image(src_img, src_points, dest_points, dest_shape, dtype=np.uint8):
   num_chans = 3
@@ -137,7 +129,7 @@ fig.subplots_adjust(wspace=0.01, left=0.1, right=0.9)
 plt.show()
 
 fig = plt.figure(figsize=(20,20))
-# Produce morph frames!
+
 i = 1
 for percent in np.linspace(1, 0, 9):
     points = weighted_average_points(src_points, dst_points, percent)
@@ -170,15 +162,17 @@ plt.suptitle('Delaunay triangulation of the images', size=30)
 fig.subplots_adjust(wspace=0.01, left=0.1, right=0.9)
 plt.show()
 
-# Facial landmarks detection
+# ## 2. Facial Landmark Detection with Deep Learning Models
 
-#pip install tensorflow==1.14
-#pip install keras==2.2.4
+# ### 2.1 Facial Landmark Detection with Keras
+
+#!pip install tensorflow==1.14
+#!pip install keras==2.2.4
 import numpy as np
 import matplotlib.pylab as plt
 import tensorflow as tf
 #print(tensorflow.__version__)
-# 1.14.0
+
 from keras.models import load_model
 from keras import backend as K
 from keras.utils.generic_utils import custom_object_scope
@@ -193,7 +187,7 @@ def smoothL1(y_true, y_pred):
     return  K.sum(x)
 
 weights = np.empty((136,)) 
-# Outer: Brows: Nose: Eyes: Mouth (0.5 : 1 : 2 : 3 : 1)
+
 weights[0:33] = 0.5
 weights[33:53] = 1
 weights[53:71] = 2
@@ -218,7 +212,6 @@ with custom_object_scope({'smoothL1': smoothL1, 'relu6': relu6,
     predictions = sess.predict_on_batch(np.reshape(image_gray, (1, w, h, 1)))
 #predictions = sess.predict_on_batch(np.reshape(img_as_float(image_gray), (1, w, h, 1)))
 
-# Convert predictions to landmarks.
 marks = np.array(predictions).flatten()
 marks = np.reshape(marks, (-1, 2))
 print(marks.shape)
@@ -242,15 +235,17 @@ for mark in marks[48:]:
 plt.subplot(122), plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB)), plt.axis('off'), plt.title('Detected Facial Landmarks', size=20)
 plt.show()
 
-#pip install mtcnn
-#pip install tensorflow==1.14
-#pip install keras==2.2.4
+# ### 2.2 Facial Landmark Detection with MTCNN
+
+#!pip install mtcnn
+#!pip install tensorflow==1.14
+#!pip install keras==2.2.4
 import tensorflow
 #print(tensorflow.__version__)
-# 1.14.0
+
 import skimage
 #print(skimage.__version__)
-# 0.17.2
+
 from mtcnn import MTCNN
 import cv2
 from skimage.draw import rectangle_perimeter
@@ -279,10 +274,9 @@ plt.axis('off')
 plt.title('Facial keypoints with MTCNN', size=20)
 plt.show()
 
+# ## 3. Implement Face Swapping
 
-# Face swapping
-
-#pip install imutils
+#!pip install imutils
 import cv2
 import dlib
 import numpy as np
@@ -295,10 +289,6 @@ predictor = dlib.shape_predictor(predictor_path)
 
 feather_amount = 11
 color_correction_blur = 0.5
-
-# 68 keypoints indices 0:68
-# RIGHT_BROW_POINTS 17:22 # LEFT_BROW_POINTS 22:27 # NOSE_POINTS 27:36
-# RIGHT_EYE_POINTS 36:42 # LEFT_EYE_POINTS 42:48 # MOUTH_POINTS 48:68
 
 keypoints = list(range(17,68))
 left_eye_points, right_eye_points = list(range(42,48)), list(range(36,42))
@@ -383,7 +373,7 @@ plt.title('After color correction', size=15)
 plt.suptitle('Face Swapping Output', size=20)
 plt.show()
 
-# Face parsing
+# ## 4. Implement Face Parsing
 
 import matplotlib.pylab as plt
 from mtcnn import MTCNN
@@ -406,7 +396,6 @@ model.load_weights('models/BiSeNet_keras.h5')
 def normalize_input(x, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)):
         # x should be RGB with range [0, 255]
         return ((x / 255) - mean)  / std
-
 
 parsing_annos = [
     '0, background', '1, skin', '2, left eyebrow', '3, right eyebrow', 
@@ -456,6 +445,8 @@ for face in faces:
     ax1.imshow(img), ax1.axis('off'), ax1.set_title('original image', size=20)
     show_parsing_with_annos(parsing_map, f, ax2), ax2.set_title('parsed face', size=20)
     plt.show()
+
+# ## 5. Face Recognition with FisherFaces
 
 import cv2
 import time, os
@@ -537,12 +528,13 @@ def fisherfaces(X_train, X_test, y_train, y_test):
     ))
     print(accuracy_score(y_test, prediction)) 
 
-
 scaler = StandardScaler()
 images = scaler.fit_transform(images)
 X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=0.1, stratify=labels, random_state=42)
 
 fisherfaces(X_train, X_test, y_train, y_test)
+
+# ### Face Recognition with Local Binary Patterns Histogram (LBPH) with *opencv-python*
 
 recognizer = cv2.face.LBPHFaceRecognizer_create()
 recognizer.train([np.reshape(im, (160,160)) for im in X_train.tolist()], np.array(y_train))
@@ -557,7 +549,7 @@ for i in range(len(y_test)):
         print("{} is Incorrectly Recognized as {}".format(nbr_actual, nbr_predicted))
 print('test accuracy = {}'.format(correct/len(y_test)))
 
-# https://docs.microsoft.com/en-us/azure/cognitive-services/computer-vision/quickstarts/python-disk
+# ## 6. Face Detection and Recognition with Microsoft Cognitive Vision APIs
 
 import os
 import sys
@@ -571,6 +563,7 @@ from skimage.color import gray2rgb
 
 subscription_key ='<your key here>' # must use your key here, otherwise you will not be able to use the service
 endpoint = 'https://xxxxxxxxxxxxx.api.cognitive.microsoft.com' # replace this by your endpoint
+
 analyze_url = endpoint + "/vision/v3.0/analyze"
 
 def detect_face_age_geneder(img):
