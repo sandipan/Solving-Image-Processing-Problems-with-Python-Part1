@@ -2,6 +2,8 @@
 
 This is the code repository for Image Processing Masterclass with Python: 50+ Solutions and Techniques Solving Complex Digital Image Processing Challenges Using Numpy, Scipy, Pytorch and Keras (https://www.amazon.com/Image-Processing-Masterclass-Python-Techniques-ebook/dp/B08YK4CC7S/), published by BPB.
 
+![cover](https://cdn.shopify.com/s/files/1/0329/9547/5515/products/11_Front_400x.jpg?v=1615370909)
+
 Over 60 problems / solutions to help you perform complex image processing and computer vision tasks with ease
 
 Over 50 problems solved with classical algorithms + ML / DL models
