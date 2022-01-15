@@ -499,8 +499,8 @@ from skimage.color import rgb2gray
 def any_neighbor_neg(img, i, j):
     for k in range(-1,2):
       for l in range(-1,2):
-         if img[i+k, j+k] < 0:
-            return True, img[i, j] - img[i+k, j+k]
+         if img[i+k, j+l] < 0:
+            return True, img[i, j] - img[i+k, j+l]
     return False, None
 
 def zero_crossing(img, th):
